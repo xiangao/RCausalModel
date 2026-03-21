@@ -1,0 +1,239 @@
+---
+title: "Getting Started with CausalModel"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with CausalModel}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(CausalModel)
+set.seed(42)
+```
+
+## Overview
+
+CausalModel provides causal inference estimators for three settings:
+
+1. **Observational studies** — OLS, IPW, AIPW, matching, DML
+2. **Randomized experiments** — difference-in-means, stratified, ANCOVA, Fisher test
+3. **Network interference** — clustered IPW and AIPW
+
+This vignette walks through basic usage of each.
+
+## Observational Study
+
+### Generate synthetic data
+
+The `generate_data()` function creates (Y, Z, X) with a known treatment effect `tau`.
+Treatment assignment depends on covariates through a logistic propensity model, so
+naive comparisons are confounded.
+
+```{r obs-data}
+data <- generate_data(N = 2000, k = 2, tau = 10)
+obs <- observational(data$Y, data$Z, data$X)
+```
+
+### OLS
+
+Linear regression of Y on (Z, X) with HC0 robust standard errors:
+
+```{r ols}
+est_via_ols(obs)
+```
+
+### IPW (Inverse Probability Weighting)
+
+Reweights outcomes by inverse propensity scores. Uses logistic regression by default:
+
+```{r ipw}
+est_via_ipw(obs)
+```
+
+### AIPW (Doubly Robust)
+
+Combines outcome modeling and propensity weighting — consistent if *either* model is
+correctly specified:
+
+```{r aipw}
+est_via_aipw(obs)
+```
+
+### Matching
+
+Nearest-neighbor matching with `M` matches per unit. Variance estimation follows
+Abadie & Imbens (2006):
+
+```{r matching}
+est_via_matching(obs, num_matches = 3)
+```
+
+Bias-adjusted matching corrects for residual imbalance in matched covariates:
+
+```{r matching-ba}
+est_via_matching(obs, num_matches = 3, bias_adj = TRUE)
+```
+
+### DML (Double Machine Learning)
+
+For continuous treatments, DML with cross-fitting estimates the linear treatment effect.
+First, generate continuous treatment data:
+
+```{r dml}
+data_c <- generate_data_continuous(N = 2000, k = 2, tau = 10)
+obs_c <- observational(data_c$Y, data_c$Z, data_c$X)
+est_via_dml(obs_c)
+```
+
+### Default estimator
+
+The `estimate()` generic dispatches to AIPW for binary treatment and DML for continuous:
+
+```{r estimate-default}
+estimate(obs)    # calls est_via_aipw
+estimate(obs_c)  # calls est_via_dml
+```
+
+## Randomized Experiment
+
+In a completely randomized design, treatment is independent of covariates.
+We simulate this directly:
+
+```{r exp-data}
+N <- 1000
+X <- matrix(rnorm(N * 2), ncol = 2)
+tau <- 5
+Z <- sample(c(rep(1, N/2), rep(0, N/2)))
+Y <- tau * Z + X %*% c(1, -1) + rnorm(N)
+exp_obj <- experimental(Y, Z, X)
+```
+
+### Difference-in-Means
+
+```{r dm}
+est_via_dm(exp_obj)
+```
+
+### ANCOVA
+
+Adjusts for covariates via Y ~ 1 + Z + X + Z*X with HC0 robust SEs.
+Achieves efficiency gains when covariates predict the outcome:
+
+```{r ancova}
+est_via_ancova(exp_obj)
+```
+
+### Stratified Estimator
+
+Weighted average of within-stratum difference-in-means:
+
+```{r strata}
+strata <- ifelse(X[,1] > 0, 1, 0)
+est_via_strata(exp_obj, strata = strata)
+```
+
+### Fisher Randomization Test
+
+Tests the sharp null of no treatment effect by comparing the observed DM statistic
+to its randomization distribution:
+
+```{r fisher}
+pval <- test_via_fisher(exp_obj, n_draws = 500)
+cat("Fisher p-value:", pval, "\n")
+```
+
+## Network Interference
+
+When units within clusters can affect each other's outcomes, standard estimators
+are biased. `clustered()` implements the framework of Qu et al. (2021).
+
+### Generate clustered data
+
+```{r int-data}
+cdata <- generate_fixed_cluster(
+  clusters = 200,
+  group_struct = c(2, 3),
+  tau = 1,
+  gamma = c(0.5, 0.1)
+)
+```
+
+### Clustered AIPW
+
+```{r int-aipw, results="hide"}
+cl_obj <- clustered(
+  Y = cdata$Y,
+  Z = cdata$Z,
+  X = cdata$X,
+  cluster_labels = cdata$cluster_labels,
+  group_labels = cdata$group_labels,
+  ingroup_labels = cdata$ingroup_labels,
+  n_matches = 50
+)
+result <- est_via_aipw(cl_obj)
+```
+
+The result is a list of group-specific estimates. Each element contains `beta_g`
+(treatment effects at each neighborhood configuration) and `se` (standard errors):
+
+```{r int-result}
+for (j in seq_along(result)) {
+  cat(sprintf("Group %d:\n", j - 1))
+  valid <- !is.nan(result[[j]]$beta_g) & result[[j]]$se > 0
+  df <- data.frame(
+    g_index = which(valid) - 1,
+    beta_g = round(result[[j]]$beta_g[valid], 3),
+    se = round(result[[j]]$se[valid], 3)
+  )
+  print(df, row.names = FALSE)
+  cat("\n")
+}
+```
+
+### Clustered IPW
+
+```{r int-ipw, results="hide"}
+result_ipw <- est_via_ipw(cl_obj)
+```
+
+```{r int-ipw-show}
+cat("Clustered IPW beta_g (group 0):\n")
+valid <- !is.nan(result_ipw[[1]]$beta_g) & result_ipw[[1]]$se > 0
+round(result_ipw[[1]]$beta_g[valid], 3)
+```
+
+## Custom Models
+
+You can plug in custom ML models by providing a list with `fit()` and `predict()`
+(or `predict_proba()` for classifiers).
+
+### Random forest AIPW
+
+```{r rf-aipw, eval=requireNamespace("randomForest", quietly=TRUE)}
+rf_out <- cm_random_forest_regressor(ntree = 100)
+rf_ps <- cm_random_forest_classifier(ntree = 100)
+est_via_aipw(obs, outcome_model = rf_out, propensity_model = rf_ps)
+```
+
+### Custom model protocol
+
+Any model wrapper that follows this protocol works:
+
+```{r custom-model}
+my_ridge <- list(
+  fit = function(X, y) {
+    X <- as.matrix(X)
+    lambda <- 1.0
+    p <- ncol(X)
+    beta <- solve(crossprod(X) + lambda * diag(p), crossprod(X, y))
+    list(beta = beta)
+  },
+  predict = function(model, X) {
+    as.numeric(as.matrix(X) %*% model$beta)
+  }
+)
+
+est_via_aipw(obs, outcome_model = my_ridge)
+```

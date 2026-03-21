@@ -1,0 +1,228 @@
+---
+title: "Observational Study Estimators"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Observational Study Estimators}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 7, fig.height = 5)
+library(CausalModel)
+set.seed(2024)
+```
+
+## Overview
+
+This vignette mirrors the Python `observational.ipynb` test notebook, demonstrating
+all observational-study estimators in CausalModel and validating their asymptotic
+properties via Monte Carlo simulation.
+
+## Basic Usage
+
+### Binary Treatment
+
+Generate data with known $\tau = 10$ and apply each estimator:
+
+```{r basic-usage}
+data <- generate_data(N = 10000, k = 5, tau = 10)
+obs <- observational(data$Y, data$Z, data$X)
+
+est_via_ols(obs)
+est_via_ipw(obs)
+est_via_aipw(obs)
+est_via_matching(obs, num_matches = 10, num_matches_for_var = 20)
+est_via_matching(obs, num_matches = 10, num_matches_for_var = 20, bias_adj = TRUE)
+```
+
+### Continuous Treatment (DML)
+
+```{r basic-dml}
+data_c <- generate_data_continuous(N = 10000, k = 5, tau = 10)
+obs_c <- observational(data_c$Y, data_c$Z, data_c$X)
+est_via_dml(obs_c)
+```
+
+## Simulation 1: IPW
+
+We run 500 replications of IPW estimation to check that the studentized statistic
+$T = (\hat{\tau} - \tau) / \widehat{SE}$ is approximately $N(0,1)$.
+
+```{r sim-ipw, results="hide"}
+n_reps <- 500
+tau <- 10
+
+ipw_results <- matrix(NA, nrow = n_reps, ncol = 2,
+                       dimnames = list(NULL, c("ate", "se")))
+
+for (i in seq_len(n_reps)) {
+  data <- generate_data(N = 1000, k = 2, tau = tau)
+  obs <- observational(data$Y, data$Z, data$X)
+  r <- est_via_ipw(obs)
+  ipw_results[i, ] <- c(r$ate, r$se)
+}
+```
+
+```{r sim-ipw-hist, fig.height=4}
+t_ipw <- (ipw_results[, "ate"] - tau) / ipw_results[, "se"]
+hist(t_ipw, breaks = 30, freq = FALSE, col = "lightblue",
+     main = "IPW: Studentized Statistic vs N(0,1)",
+     xlab = "t", xlim = c(-4, 4))
+curve(dnorm(x), add = TRUE, col = "red", lwd = 2)
+abline(v = 0, lty = 2)
+```
+
+```{r sim-ipw-table}
+ates <- ipw_results[, "ate"]
+ses <- ipw_results[, "se"]
+ci_lo <- ates - 1.96 * ses
+ci_hi <- ates + 1.96 * ses
+knitr::kable(data.frame(
+  Bias = mean(ates) - tau,
+  RMSE = sqrt(mean((ates - tau)^2)),
+  Mean_SE = mean(ses),
+  Emp_SE = sd(ates),
+  Coverage = mean(ci_lo <= tau & tau <= ci_hi)
+), digits = 3, caption = "IPW (N=1000, 500 reps)")
+```
+
+## Simulation 2: AIPW
+
+```{r sim-aipw, results="hide"}
+aipw_results <- matrix(NA, nrow = n_reps, ncol = 2,
+                        dimnames = list(NULL, c("ate", "se")))
+
+for (i in seq_len(n_reps)) {
+  data <- generate_data(N = 1000, k = 2, tau = tau)
+  obs <- observational(data$Y, data$Z, data$X)
+  r <- est_via_aipw(obs)
+  aipw_results[i, ] <- c(r$ate, r$se)
+}
+```
+
+```{r sim-aipw-hist, fig.height=4}
+t_aipw <- (aipw_results[, "ate"] - tau) / aipw_results[, "se"]
+hist(t_aipw, breaks = 30, freq = FALSE, col = "lightblue",
+     main = "AIPW: Studentized Statistic vs N(0,1)",
+     xlab = "t", xlim = c(-4, 4))
+curve(dnorm(x), add = TRUE, col = "red", lwd = 2)
+abline(v = 0, lty = 2)
+```
+
+```{r sim-aipw-table}
+ates <- aipw_results[, "ate"]
+ses <- aipw_results[, "se"]
+ci_lo <- ates - 1.96 * ses
+ci_hi <- ates + 1.96 * ses
+knitr::kable(data.frame(
+  Bias = mean(ates) - tau,
+  RMSE = sqrt(mean((ates - tau)^2)),
+  Mean_SE = mean(ses),
+  Emp_SE = sd(ates),
+  Coverage = mean(ci_lo <= tau & tau <= ci_hi)
+), digits = 3, caption = "AIPW (N=1000, 500 reps)")
+```
+
+## Simulation 3: Matching
+
+Nearest-neighbor matching with bias adjustment.
+
+```{r sim-matching, results="hide"}
+match_results <- matrix(NA, nrow = n_reps, ncol = 2,
+                         dimnames = list(NULL, c("ate", "se")))
+
+for (i in seq_len(n_reps)) {
+  data <- generate_data(N = 1000, k = 2, tau = tau)
+  obs <- observational(data$Y, data$Z, data$X)
+  r <- est_via_matching(obs, num_matches = 1, bias_adj = TRUE)
+  match_results[i, ] <- c(r$ate, r$se)
+}
+```
+
+```{r sim-matching-hist, fig.height=4}
+t_match <- (match_results[, "ate"] - tau) / match_results[, "se"]
+hist(t_match, breaks = 30, freq = FALSE, col = "lightblue",
+     main = "Matching: Studentized Statistic vs N(0,1)",
+     xlab = "t", xlim = c(-4, 4))
+curve(dnorm(x), add = TRUE, col = "red", lwd = 2)
+abline(v = 0, lty = 2)
+```
+
+```{r sim-matching-table}
+ates <- match_results[, "ate"]
+ses <- match_results[, "se"]
+ci_lo <- ates - 1.96 * ses
+ci_hi <- ates + 1.96 * ses
+knitr::kable(data.frame(
+  Bias = mean(ates) - tau,
+  RMSE = sqrt(mean((ates - tau)^2)),
+  Mean_SE = mean(ses),
+  Emp_SE = sd(ates),
+  Coverage = mean(ci_lo <= tau & tau <= ci_hi)
+), digits = 3, caption = "Matching (N=1000, 500 reps)")
+```
+
+## Simulation 4: DML (Continuous Treatment)
+
+Double machine learning with 2-fold cross-fitting for continuous treatment.
+
+```{r sim-dml, results="hide"}
+dml_results <- matrix(NA, nrow = n_reps, ncol = 2,
+                       dimnames = list(NULL, c("ate", "se")))
+
+for (i in seq_len(n_reps)) {
+  data <- generate_data_continuous(N = 1000, k = 2, tau = tau)
+  obs <- observational(data$Y, data$Z, data$X)
+  r <- est_via_dml(obs, k_folds = 2)
+  dml_results[i, ] <- c(r$ate, r$se)
+}
+```
+
+```{r sim-dml-hist, fig.height=4}
+t_dml <- (dml_results[, "ate"] - tau) / dml_results[, "se"]
+hist(t_dml, breaks = 30, freq = FALSE, col = "lightblue",
+     main = "DML: Studentized Statistic vs N(0,1)",
+     xlab = "t", xlim = c(-4, 4))
+curve(dnorm(x), add = TRUE, col = "red", lwd = 2)
+abline(v = 0, lty = 2)
+```
+
+```{r sim-dml-table}
+ates <- dml_results[, "ate"]
+ses <- dml_results[, "se"]
+ci_lo <- ates - 1.96 * ses
+ci_hi <- ates + 1.96 * ses
+knitr::kable(data.frame(
+  Bias = mean(ates) - tau,
+  RMSE = sqrt(mean((ates - tau)^2)),
+  Mean_SE = mean(ses),
+  Emp_SE = sd(ates),
+  Coverage = mean(ci_lo <= tau & tau <= ci_hi)
+), digits = 3, caption = "DML (N=1000, 500 reps)")
+```
+
+## All Histograms
+
+Summary panel of all four estimators:
+
+```{r all-hist, fig.height=4, fig.width=10}
+par(mfrow = c(1, 4), mar = c(3, 3, 2, 1))
+for (info in list(
+  list(t_ipw, "IPW"), list(t_aipw, "AIPW"),
+  list(t_match, "Matching"), list(t_dml, "DML"))) {
+  hist(info[[1]], breaks = 30, freq = FALSE, col = "lightblue",
+       main = info[[2]], xlab = "t", xlim = c(-4, 4))
+  curve(dnorm(x), add = TRUE, col = "red", lwd = 2)
+  abline(v = 0, lty = 2)
+}
+```
+
+## Summary
+
+All four estimators produce studentized statistics that are approximately
+$N(0,1)$ under correct specification, confirming:
+
+- Unbiasedness of the ATE estimates
+- Consistency of the SE estimates
+- Approximately 95% coverage of the confidence intervals

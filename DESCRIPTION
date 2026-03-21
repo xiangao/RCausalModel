@@ -1,0 +1,28 @@
+Package: CausalModel
+Title: Causal Inference Estimators for Observational and Experimental Studies
+Version: 0.1.0
+Authors@R: c(
+    person("Zhaonan", "Qu", role = c("aut", "cre"), email = "zhaonanq@stanford.edu"),
+    person("CausalModel Contributors", role = "ctb")
+    )
+Description: Implements causal inference estimators for observational studies,
+    randomized experiments, and network interference settings. Provides OLS,
+    IPW, AIPW, matching, and double machine learning estimators for
+    observational data; difference-in-means, stratified, and ANCOVA estimators
+    for experiments; and clustered IPW/AIPW estimators for interference
+    settings. Based on Qu et al. (2021).
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Imports:
+    stats,
+    RANN,
+    nnet
+Suggests:
+    randomForest,
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown
+Config/testthat/edition: 3
+VignetteBuilder: knitr
