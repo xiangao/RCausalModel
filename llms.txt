@@ -1,0 +1,202 @@
+# CausalModel
+
+[![pkgdown](https://img.shields.io/badge/pkgdown-site-blue.svg)](https://xiangao.github.io/RCausalModel/)
+
+R package for causal inference estimation in observational studies,
+randomized experiments, and network interference settings. Port of the
+[Python CausalModel package](https://github.com/freshtaste/CausalModel)
+(Qu et al. 2021).
+
+## Installation
+
+``` r
+
+# install.packages("devtools")
+devtools::install_github("username/RCausalModel")
+```
+
+## Observational Studies
+
+``` r
+
+library(CausalModel)
+
+# Generate synthetic data with known ATE = 10
+data <- generate_data(N = 5000, k = 2, tau = 10)
+obs <- observational(data$Y, data$Z, data$X)
+
+# Estimators
+est_via_ols(obs)        # OLS with HC0 robust SE
+est_via_ipw(obs)        # Inverse probability weighting
+est_via_aipw(obs)       # Augmented IPW (doubly robust)
+est_via_matching(obs)   # Nearest-neighbor matching
+estimate(obs)           # Default (AIPW for binary Z)
+
+# Continuous treatment -> Double ML
+data_c <- generate_data_continuous(N = 5000, k = 2, tau = 10)
+obs_c <- observational(data_c$Y, data_c$Z, data_c$X)
+est_via_dml(obs_c)
+```
+
+## Randomized Experiments
+
+``` r
+
+exp_obj <- experimental(Y, Z, X)
+
+est_via_dm(exp_obj)                    # Difference in means
+est_via_strata(exp_obj, strata = s)    # Stratified estimator
+est_via_ancova(exp_obj)                # ANCOVA with interactions
+test_via_fisher(exp_obj, n_draws = 1000)  # Fisher randomization test
+```
+
+## Experimental Designs
+
+``` r
+
+design <- crd(treated_ratio = 0.5)        # Completely randomized
+design <- bernoulli(treated_prob = 0.5)   # Bernoulli
+Z <- draw(design, n = 100)               # Draw treatment vector
+
+# Rerandomization for covariate balance
+design <- crd(treated_ratio = 0.5, covariate = X, balance = TRUE, eps = 0.1)
+```
+
+## Network Interference
+
+``` r
+
+# Generate clustered data with spillover effects
+data <- generate_fixed_cluster(clusters = 5000, group_struct = c(2, 3, 4),
+                                k = 2, tau = 1, gamma = c(0.5, 0.1, 0.2))
+
+cl <- clustered(data$Y, data$Z, data$X,
+                data$cluster_labels, data$group_labels,
+                data$ingroup_labels)
+
+# Estimate treatment effects under interference
+result <- est_via_ipw(cl)    # IPW under partial interference
+result <- est_via_aipw(cl)   # AIPW under partial interference
+```
+
+## Custom Models
+
+Supply your own outcome/propensity models:
+
+``` r
+
+# Built-in wrappers
+est_via_aipw(obs, outcome_model = cm_ols(), propensity_model = cm_logistic())
+
+# Random forest (requires randomForest package)
+est_via_aipw(obs,
+  outcome_model = cm_random_forest_regressor(),
+  propensity_model = cm_random_forest_classifier())
+```
+
+## Methods
+
+| Estimator | Function | Setting |
+|----|----|----|
+| OLS | [`est_via_ols()`](https://xiangao.github.io/RCausalModel/reference/est_via_ols.md) | Observational |
+| IPW | [`est_via_ipw()`](https://xiangao.github.io/RCausalModel/reference/est_via_ipw.md) | Observational / Interference |
+| AIPW | [`est_via_aipw()`](https://xiangao.github.io/RCausalModel/reference/est_via_aipw.md) | Observational / Interference |
+| Matching | [`est_via_matching()`](https://xiangao.github.io/RCausalModel/reference/est_via_matching.md) | Observational |
+| Double ML | [`est_via_dml()`](https://xiangao.github.io/RCausalModel/reference/est_via_dml.md) | Observational (continuous Z) |
+| Difference in Means | [`est_via_dm()`](https://xiangao.github.io/RCausalModel/reference/est_via_dm.md) | Experimental |
+| Stratified | [`est_via_strata()`](https://xiangao.github.io/RCausalModel/reference/est_via_strata.md) | Experimental |
+| ANCOVA | [`est_via_ancova()`](https://xiangao.github.io/RCausalModel/reference/est_via_ancova.md) | Experimental |
+| Fisher Test | [`test_via_fisher()`](https://xiangao.github.io/RCausalModel/reference/test_via_fisher.md) | Experimental |
+
+## Vignettes
+
+Full documentation: **<https://xiangao.github.io/RCausalModel/>**
+
+| Vignette | Description |
+|----|----|
+| [Quickstart](https://xiangao.github.io/RCausalModel/articles/quickstart.html) | Getting started: basic usage of all estimators |
+| [Simulations](https://xiangao.github.io/RCausalModel/articles/simulations.html) | Monte Carlo validation across all settings |
+| [Observational](https://xiangao.github.io/RCausalModel/articles/observational.html) | Observational estimators with per-estimator simulations |
+| [Experimental](https://xiangao.github.io/RCausalModel/articles/experimental.html) | Design objects and experimental estimators |
+| [Interference](https://xiangao.github.io/RCausalModel/articles/interference.html) | Clustered interference with normality and coverage simulations |
+| [Reference index](https://xiangao.github.io/RCausalModel/reference/index.html) | All documented functions on one page |
+
+## References
+
+Qu, Z., McNamara, R., Jia, R., & Imbens, G. (2021). CausalModel: A
+Python Package for Causal Inference.
+
+# Package index
+
+## Study designs
+
+Constructors for observational, experimental, and clustered-interference
+designs.
+
+- [`observational()`](https://xiangao.github.io/RCausalModel/reference/observational.md)
+  : Create an Observational Study Object
+- [`experimental()`](https://xiangao.github.io/RCausalModel/reference/experimental.md)
+  : Create an Experimental Study Object
+- [`clustered()`](https://xiangao.github.io/RCausalModel/reference/clustered.md)
+  : Create a Clustered Interference Study Object
+- [`crd()`](https://xiangao.github.io/RCausalModel/reference/crd.md) :
+  Completely Randomized Design
+- [`bernoulli()`](https://xiangao.github.io/RCausalModel/reference/bernoulli.md)
+  : Bernoulli Randomized Design
+- [`draw()`](https://xiangao.github.io/RCausalModel/reference/draw.md) :
+  Draw Treatment Assignment
+- [`get_params_via_obs()`](https://xiangao.github.io/RCausalModel/reference/get_params_via_obs.md)
+  : Infer Design Parameters from Observed Treatment
+
+## Estimators
+
+Estimation methods for causal effects and randomization tests.
+
+- [`estimate()`](https://xiangao.github.io/RCausalModel/reference/estimate.md)
+  : Default Estimation
+- [`est_via_ols()`](https://xiangao.github.io/RCausalModel/reference/est_via_ols.md)
+  : OLS Estimator
+- [`est_via_ipw()`](https://xiangao.github.io/RCausalModel/reference/est_via_ipw.md)
+  : IPW Estimator
+- [`est_via_aipw()`](https://xiangao.github.io/RCausalModel/reference/est_via_aipw.md)
+  : AIPW (Doubly Robust) Estimator
+- [`est_via_matching()`](https://xiangao.github.io/RCausalModel/reference/est_via_matching.md)
+  : Matching Estimator
+- [`est_via_dml()`](https://xiangao.github.io/RCausalModel/reference/est_via_dml.md)
+  : Double/Debiased Machine Learning Estimator
+- [`est_via_dm()`](https://xiangao.github.io/RCausalModel/reference/est_via_dm.md)
+  : Difference-in-Means Estimator
+- [`est_via_strata()`](https://xiangao.github.io/RCausalModel/reference/est_via_strata.md)
+  : Stratified Estimator
+- [`est_via_ancova()`](https://xiangao.github.io/RCausalModel/reference/est_via_ancova.md)
+  : ANCOVA Estimator
+- [`test_via_fisher()`](https://xiangao.github.io/RCausalModel/reference/test_via_fisher.md)
+  : Fisher Randomization Test
+
+## Data generation and models
+
+- [`generate_data()`](https://xiangao.github.io/RCausalModel/reference/generate_data.md)
+  : Generate Observational Data
+- [`generate_data_continuous()`](https://xiangao.github.io/RCausalModel/reference/generate_data_continuous.md)
+  : Generate Observational Data with Continuous Treatment
+- [`generate_clustered_data()`](https://xiangao.github.io/RCausalModel/reference/generate_clustered_data.md)
+  : Generate Clustered Data with Varying Cluster Sizes
+- [`generate_fixed_cluster()`](https://xiangao.github.io/RCausalModel/reference/generate_fixed_cluster.md)
+  : Generate Fixed-Size Cluster Data with Interference
+- [`po_data()`](https://xiangao.github.io/RCausalModel/reference/po_data.md)
+  : Create a Potential Outcome Data Container
+- [`get_balance()`](https://xiangao.github.io/RCausalModel/reference/get_balance.md)
+  : Compute Rerandomization Balance Criterion
+- [`cm_ols()`](https://xiangao.github.io/RCausalModel/reference/cm_ols.md)
+  : OLS Model Wrapper
+- [`cm_logistic()`](https://xiangao.github.io/RCausalModel/reference/cm_logistic.md)
+  : Logistic Regression Model Wrapper
+- [`cm_multi_logistic()`](https://xiangao.github.io/RCausalModel/reference/cm_multi_logistic.md)
+  : Multinomial Logistic Regression Model Wrapper
+- [`cm_random_forest_regressor()`](https://xiangao.github.io/RCausalModel/reference/cm_random_forest_regressor.md)
+  : Random Forest Regressor Wrapper
+- [`cm_random_forest_classifier()`](https://xiangao.github.io/RCausalModel/reference/cm_random_forest_classifier.md)
+  : Random Forest Classifier Wrapper
+- [`cm_result()`](https://xiangao.github.io/RCausalModel/reference/cm_result.md)
+  : Create a Causal Model Result
+
