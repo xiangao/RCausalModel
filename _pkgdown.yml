@@ -1,0 +1,58 @@
+url: https://xiangao.github.io/RCausalModel/
+
+template:
+  bootstrap: 5
+
+navbar:
+  structure:
+    left:  [intro, reference, articles, news]
+    right: [search, github]
+
+reference:
+  - title: Study designs
+    desc: Constructors for observational, experimental, and clustered-interference designs.
+    contents:
+      - observational
+      - experimental
+      - clustered
+      - crd
+      - bernoulli
+      - draw
+      - get_params_via_obs
+  - title: Estimators
+    desc: Estimation methods for causal effects and randomization tests.
+    contents:
+      - estimate
+      - est_via_ols
+      - est_via_ipw
+      - est_via_aipw
+      - est_via_matching
+      - est_via_dml
+      - est_via_dm
+      - est_via_strata
+      - est_via_ancova
+      - test_via_fisher
+  - title: Data generation and models
+    contents:
+      - generate_data
+      - generate_data_continuous
+      - generate_clustered_data
+      - generate_fixed_cluster
+      - po_data
+      - get_balance
+      - cm_ols
+      - cm_logistic
+      - cm_multi_logistic
+      - cm_random_forest_regressor
+      - cm_random_forest_classifier
+      - cm_result
+
+articles:
+  - title: Vignettes
+    contents:
+      - quickstart
+      - simulations
+      - observational
+      - experimental
+      - interference
+

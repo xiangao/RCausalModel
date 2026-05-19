@@ -1,5 +1,7 @@
 # CausalModel
 
+[![pkgdown](https://img.shields.io/badge/pkgdown-site-blue.svg)](https://xiangao.github.io/RCausalModel/)
+
 R package for causal inference estimation in observational studies, randomized experiments, and network interference settings. Port of the [Python CausalModel package](https://github.com/freshtaste/CausalModel) (Qu et al. 2021).
 
 ## Installation
@@ -99,13 +101,16 @@ est_via_aipw(obs,
 
 ## Vignettes
 
+Full documentation: **<https://xiangao.github.io/RCausalModel/>**
+
 | Vignette | Description |
 |----------|-------------|
-| `quickstart` | Getting started — basic usage of all estimators |
-| `simulations` | Monte Carlo validation across all settings |
-| `observational` | Observational estimators with per-estimator simulations (mirrors Python `observational.ipynb`) |
-| `experimental` | Design objects and experimental estimators (mirrors Python `experimental.ipynb`) |
-| `interference` | Clustered interference with normality and coverage simulations (mirrors Python `Interference.ipynb`) |
+| [Quickstart](https://xiangao.github.io/RCausalModel/articles/quickstart.html) | Getting started: basic usage of all estimators |
+| [Simulations](https://xiangao.github.io/RCausalModel/articles/simulations.html) | Monte Carlo validation across all settings |
+| [Observational](https://xiangao.github.io/RCausalModel/articles/observational.html) | Observational estimators with per-estimator simulations |
+| [Experimental](https://xiangao.github.io/RCausalModel/articles/experimental.html) | Design objects and experimental estimators |
+| [Interference](https://xiangao.github.io/RCausalModel/articles/interference.html) | Clustered interference with normality and coverage simulations |
+| [Reference index](https://xiangao.github.io/RCausalModel/reference/index.html) | All documented functions on one page |
 
 ## References
 

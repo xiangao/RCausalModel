@@ -12,6 +12,7 @@ Description: Implements causal inference estimators for observational studies,
     for experiments; and clustered IPW/AIPW estimators for interference
     settings. Based on Qu et al. (2021).
 License: MIT + file LICENSE
+URL: https://xiangao.github.io/RCausalModel/, https://github.com/xiangao/RCausalModel
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
