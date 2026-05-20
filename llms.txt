@@ -2,10 +2,11 @@
 
 [![pkgdown](https://img.shields.io/badge/pkgdown-site-blue.svg)](https://xiangao.github.io/RCausalModel/)
 
-R package for causal inference estimation in observational studies,
-randomized experiments, and network interference settings. Port of the
-[Python CausalModel package](https://github.com/freshtaste/CausalModel)
-(Qu et al. 2021).
+`CausalModel` is an R port of the [Python CausalModel
+package](https://github.com/freshtaste/CausalModel) from Qu et
+al. (2021). It collects estimators for three settings I often teach
+together: observational studies, randomized experiments, and clustered
+interference.
 
 ## Installation
 
@@ -200,17 +201,3 @@ Estimation methods for causal effects and randomization tests.
 - [`cm_result()`](https://xiangao.github.io/RCausalModel/reference/cm_result.md)
   : Create a Causal Model Result
 
-# Articles
-
-### Vignettes
-
-- [Getting Started with
-  CausalModel](https://xiangao.github.io/RCausalModel/articles/quickstart.md):
-- [Monte Carlo
-  Simulations](https://xiangao.github.io/RCausalModel/articles/simulations.md):
-- [Observational Study
-  Estimators](https://xiangao.github.io/RCausalModel/articles/observational.md):
-- [Experimental Designs and
-  Estimators](https://xiangao.github.io/RCausalModel/articles/experimental.md):
-- [Network Interference
-  Estimators](https://xiangao.github.io/RCausalModel/articles/interference.md):
