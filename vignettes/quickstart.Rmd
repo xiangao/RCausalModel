@@ -15,13 +15,13 @@ set.seed(42)
 
 ## Overview
 
-CausalModel provides causal inference estimators for three settings:
+CausalModel collects estimators for three settings:
 
 1. **Observational studies** — OLS, IPW, AIPW, matching, DML
 2. **Randomized experiments** — difference-in-means, stratified, ANCOVA, Fisher test
 3. **Network interference** — clustered IPW and AIPW
 
-This vignette walks through basic usage of each.
+This vignette shows the basic call pattern for each setting.
 
 ## Observational Study
 

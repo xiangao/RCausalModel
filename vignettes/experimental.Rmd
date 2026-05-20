@@ -15,12 +15,12 @@ set.seed(2024)
 
 ## Overview
 
-This vignette mirrors the Python `experimental.ipynb` test notebook, demonstrating
-the design objects and experimental estimators in CausalModel.
+This vignette mirrors the Python `experimental.ipynb` notebook and shows the
+design objects and experimental estimators in CausalModel.
 
 ## Design Objects
 
-CausalModel provides two randomization designs: completely randomized design (CRD)
+CausalModel has two randomization designs: completely randomized design (CRD)
 and Bernoulli randomization.
 
 ### Completely Randomized Design
@@ -138,6 +138,6 @@ knitr::kable(results, digits = 4,
   CRD with `balance = TRUE` ensures covariate balance through rerandomization.
 - **DM** is the natural estimator under randomization but ignores covariate information.
 - **Stratified estimation** improves precision when strata are informative.
-- **ANCOVA** provides the largest efficiency gain when covariates predict the outcome.
-- **Fisher test** provides exact p-values under the sharp null, without asymptotic
+- **ANCOVA** has the largest efficiency gain when covariates predict the outcome.
+- **Fisher test** gives exact p-values under the sharp null, without asymptotic
   approximations.
