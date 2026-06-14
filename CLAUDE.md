@@ -5,7 +5,7 @@ R package port of Python causal inference library implementing estimators for ob
 
 ## Structure
 - `R/` — package source (interference.R, random_data.R, observational.R, etc.)
-- `tests/testthat/` — 113 tests including slow simulation tests
+- `tests/testthat/` — 113 tests; slow clustered-interference simulations gated behind `CAUSALMODEL_SLOW_TESTS=1`
 - `vignettes/` — `quickstart.Rmd` (usage walkthrough), `simulations.Rmd` (Monte Carlo validation), `observational.Rmd` (mirrors Python observational.ipynb), `experimental.Rmd` (mirrors Python experimental.ipynb), `interference.Rmd` (mirrors Python Interference.ipynb)
 - Parent project with Python source: `~/projects/claude/CausalModel`
 
@@ -18,8 +18,12 @@ Rscript -e 'devtools::build_vignettes()'
 ```
 
 ## Testing
-- Some simulation tests (normality, coverage) are slow (10+ minutes) — they are NOT skipped
-- `skip_on_cran()` is used for slow tests but they run locally
+- The three clustered-interference simulation tests (beta(g) recovery, normality, coverage) are
+  slow (each runs Monte Carlo over multiple cluster sizes; >15 minutes combined). They are gated
+  behind an env var via `skip_slow_interference()` and **skip by default**.
+- To run them, set `CAUSALMODEL_SLOW_TESTS=1`, e.g.
+  `CAUSALMODEL_SLOW_TESTS=1 Rscript -e 'devtools::test(filter="interference")'`.
+  Without the flag the default suite is fast (47 pass, 3 skipped in the interference file).
 - All estimators: OLS, IPW, AIPW, matching, DML, difference-in-means, strata, ANCOVA, Fisher test, clustered IPW/AIPW
 
 ## Design Decisions
