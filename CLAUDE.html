@@ -42,7 +42,8 @@
 <ul><li>
 <code>R/</code> — package source (interference.R, random_data.R, observational.R, etc.)</li>
 <li>
-<code>tests/testthat/</code> — 113 tests including slow simulation tests</li>
+<code>tests/testthat/</code> — 113 tests; slow clustered-interference simulations gated behind <code>CAUSALMODEL_SLOW_TESTS=1</code>
+</li>
 <li>
 <code>vignettes/</code> — <code>quickstart.Rmd</code> (usage walkthrough), <code>simulations.Rmd</code> (Monte Carlo validation), <code>observational.Rmd</code> (mirrors Python observational.ipynb), <code>experimental.Rmd</code> (mirrors Python experimental.ipynb), <code>interference.Rmd</code> (mirrors Python Interference.ipynb)</li>
 <li>Parent project with Python source: <code>~/projects/claude/CausalModel</code>
@@ -57,9 +58,8 @@
 </div>
 <div class="section level2">
 <h2 id="testing">Testing<a class="anchor" aria-label="anchor" href="#testing"></a></h2>
-<ul><li>Some simulation tests (normality, coverage) are slow (10+ minutes) — they are NOT skipped</li>
-<li>
-<code>skip_on_cran()</code> is used for slow tests but they run locally</li>
+<ul><li>The three clustered-interference simulation tests (beta(g) recovery, normality, coverage) are slow (each runs Monte Carlo over multiple cluster sizes; &gt;15 minutes combined). They are gated behind an env var via <code>skip_slow_interference()</code> and <strong>skip by default</strong>.</li>
+<li>To run them, set <code>CAUSALMODEL_SLOW_TESTS=1</code>, e.g. <code>CAUSALMODEL_SLOW_TESTS=1 Rscript -e 'devtools::test(filter="interference")'</code>. Without the flag the default suite is fast (47 pass, 3 skipped in the interference file).</li>
 <li>All estimators: OLS, IPW, AIPW, matching, DML, difference-in-means, strata, ANCOVA, Fisher test, clustered IPW/AIPW</li>
 </ul></div>
 <div class="section level2">
