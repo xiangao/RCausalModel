@@ -4,6 +4,13 @@
 # and CausalModel/tests/Interference.ipynb
 # ===========================================================================
 
+skip_slow_interference <- function() {
+  testthat::skip_if_not(
+    identical(Sys.getenv("CAUSALMODEL_SLOW_TESTS"), "1"),
+    "set CAUSALMODEL_SLOW_TESTS=1 to run slow clustered interference simulations"
+  )
+}
+
 # ---- Data generation: dimension checks (test_get_fixed_cluster) ----
 
 test_that("generate_fixed_cluster produces correct dimensions", {
@@ -155,7 +162,7 @@ test_that("Clustered AIPW estimator runs and returns valid structure", {
 # beta(g) = tau + gamma * g across the neighborhood exposure grid.
 
 test_that("Clustered AIPW recovers beta(g) within tolerance", {
-  skip_on_cran()
+  skip_slow_interference()
   set.seed(42)
   clusters_list <- c(2000, 3000, 4000)
   group_struct_list <- list(c(2, 2), c(3, 2), c(3, 3))
@@ -221,7 +228,7 @@ test_that("Clustered AIPW recovers beta(g) within tolerance", {
 # Verifies that (beta_hat(g) - beta(g)) / SE ~ N(0, 1)
 
 test_that("Clustered AIPW estimates are approximately normal", {
-  skip_on_cran()
+  skip_slow_interference()
   set.seed(42)
 
   clusters_list <- c(1600, 2400, 3200)
@@ -268,7 +275,7 @@ test_that("Clustered AIPW estimates are approximately normal", {
 # From Interference.ipynb: checks 95% CI coverage is approximately 95%
 
 test_that("Clustered AIPW achieves approximately 95% coverage", {
-  skip_on_cran()
+  skip_slow_interference()
   set.seed(42)
 
   clusters <- 500

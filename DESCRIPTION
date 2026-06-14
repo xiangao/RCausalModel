@@ -23,6 +23,7 @@ Imports:
 Suggests:
     randomForest,
     testthat (>= 3.0.0),
+    praise,
     knitr,
     rmarkdown
 Config/testthat/edition: 3
