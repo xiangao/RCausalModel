@@ -13,7 +13,7 @@ interference.
 ``` r
 
 # install.packages("devtools")
-devtools::install_github("username/RCausalModel")
+devtools::install_github("xiangao/RCausalModel")
 ```
 
 ## Observational Studies
