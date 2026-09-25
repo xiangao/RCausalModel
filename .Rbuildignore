@@ -4,3 +4,8 @@
 ^README\.Rmd$
 ^doc$
 ^Meta$
+^\.github$
+^\.claude$
+^docs$
+^_pkgdown\.yml$
+^CLAUDE\.md$
